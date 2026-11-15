@@ -11,6 +11,8 @@ __pycache__/
 *.py[cod]
 
 # Тесты и покрытие
-.pytest_cache/
-.coverage
 htmlcov/
+
+# Служебные файлы тестов и покрытия
+.coverage
+.pytest_cache/
