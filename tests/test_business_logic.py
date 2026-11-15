@@ -106,3 +106,27 @@ def test_cast_to_object_list_skips_bad_records():
     planes = Aeroplane.cast_to_object_list(data)
     assert len(planes) == 1
     assert planes[0].callsign == "OK1"
+
+
+def test_faster_and_slower_than():
+    fast = Aeroplane("a", "F1", "Spain", 300.0, 5000.0)
+    slow = Aeroplane("b", "S1", "Spain", 200.0, 10000.0)
+    assert fast.faster_than(slow)
+    assert slow.slower_than(fast)
+    assert not slow.faster_than(fast)
+
+
+def test_higher_and_lower_than():
+    high = Aeroplane("a", "H1", "Spain", 200.0, 11000.0)
+    low = Aeroplane("b", "L1", "Spain", 300.0, 5000.0)
+    assert high.higher_than(low)
+    assert low.lower_than(high)
+    assert not low.higher_than(high)
+
+
+def test_comparison_with_wrong_type_raises():
+    plane = Aeroplane("a", "X1", "Spain", 200.0, 9000.0)
+    with pytest.raises(TypeError):
+        plane.faster_than("не самолёт")
+    with pytest.raises(TypeError):
+        plane.higher_than(None)

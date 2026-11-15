@@ -123,7 +123,7 @@ class Aeroplane:
         self._geo_altitude = self._validate_number(value, "geo_altitude")
 
     # ------------------------------------------------------------------
-    # Сравнение по скорости и высоте (для сортировки)
+    # Сравнение по высоте (магические методы — для sorted и >, <)
     # ------------------------------------------------------------------
 
     def __eq__(self, other: object) -> bool:
@@ -147,12 +147,33 @@ class Aeroplane:
             return NotImplemented
         return self.geo_altitude > other.geo_altitude
 
+    # ------------------------------------------------------------------
+    # Явные методы сравнения по скорости и высоте
+    # ------------------------------------------------------------------
+
     def faster_than(self, other: "Aeroplane") -> bool:
-        """Сравнение по скорости (дополнительно к высоте)."""
+        """Сравнение по скорости: этот борт летит быстрее?"""
+        if not isinstance(other, Aeroplane):
+            raise TypeError("Сравнивать можно только объекты Aeroplane")
         return self.velocity > other.velocity
 
     def slower_than(self, other: "Aeroplane") -> bool:
+        """Сравнение по скорости: этот борт летит медленнее?"""
+        if not isinstance(other, Aeroplane):
+            raise TypeError("Сравнивать можно только объекты Aeroplane")
         return self.velocity < other.velocity
+
+    def higher_than(self, other: "Aeroplane") -> bool:
+        """Сравнение по высоте: этот борт летит выше?"""
+        if not isinstance(other, Aeroplane):
+            raise TypeError("Сравнивать можно только объекты Aeroplane")
+        return self.geo_altitude > other.geo_altitude
+
+    def lower_than(self, other: "Aeroplane") -> bool:
+        """Сравнение по высоте: этот борт летит ниже?"""
+        if not isinstance(other, Aeroplane):
+            raise TypeError("Сравнивать можно только объекты Aeroplane")
+        return self.geo_altitude < other.geo_altitude
 
     # ------------------------------------------------------------------
     # Сериализация: объект <-> dict (для сохранения в JSON)
