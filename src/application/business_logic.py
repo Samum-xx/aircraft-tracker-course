@@ -173,38 +173,29 @@ class Aeroplane:
         """
         Создаёт объект Aeroplane из словаря (например, из JSON-файла).
 
-        Особенность API OpenSky: вместо числа может прийти None,
-        а позывной бывает пустой строкой или строкой из пробелов.
-        В таких случаях подставляем заглушку "unknown" / 0.0 вместо
-        падения с ошибкой, чтобы не терять запись целиком.
+        Известная особенность API OpenSky: вместо числа может прийти None.
+        Для позывного подставляем заглушку — борт без позывного бывает,
+        а вот отсутствие скорости или высоты — повод отбросить запись.
         """
         if not isinstance(data, dict):
             raise TypeError("Данные должны быть словарём")
 
-        def get_number(key: str) -> float:
-            value = data.get(key)
-            return 0.0 if value is None else value
-
-        callsign = data.get("callsign") or "unknown"
-        origin_country = data.get("origin_country") or "unknown"
+        callsign = data.get("callsign")
+        if callsign is None:
+            callsign = "unknown"
 
         return cls(
             icao24=data["icao24"],
             callsign=callsign,
-            origin_country=origin_country,
-            velocity=get_number("velocity"),
-            geo_altitude=get_number("geo_altitude"),
+            origin_country=data["origin_country"],
+            velocity=data["velocity"],
+            geo_altitude=data["geo_altitude"],
         )
 
     @classmethod
-    def cast_to_object_list(cls, data: list[dict]) -> list["Aeroplane"]:
-        """
-        Создаёт список объектов Aeroplane из списка словарей.
-
-        Записи без icao24 или с некорректными типами полей пропускаются —
-        их невозможно корректно преобразовать в объект.
-        """
-        aeroplanes: list["Aeroplane"] = []
+    def cast_to_object_list(cls, data: list) -> list:
+        """Создаёт список объектов Aeroplane из списка словарей."""
+        aeroplanes = []
         for item in data:
             try:
                 aeroplanes.append(cls.from_dict(item))
