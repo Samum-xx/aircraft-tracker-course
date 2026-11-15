@@ -11,7 +11,7 @@ class Aeroplane:
     только через свойства (@property / @setter) с валидацией.
 
     Атрибуты:
-        icao24: уникальный бортовой идентификатор (hex-код трансponderа).
+        icao24: уникальный бортовой идентификатор (hex-код транспондера).
         callsign: позывной борта, например "UAL1621".
         origin_country: страна регистрации самолёта.
         velocity: скорость полёта, м/с.
@@ -24,7 +24,7 @@ class Aeroplane:
                  origin_country: str,
                  velocity: float,
                  geo_altitude: float) -> None:
-        # Проверяем строковые поля до присвоения
+        # Строковые поля проверяются до присвоения
         self.icao24 = icao24
         self.callsign = callsign
         self.origin_country = origin_country
@@ -131,12 +131,20 @@ class Aeroplane:
             return NotImplemented
         return self.icao24 == other.icao24
 
-    def __lt__(self, other: "Aeroplane") -> bool:
+    def __hash__(self) -> int:
+        """Позволяет хранить самолёты в set и использовать как ключи dict."""
+        return hash(self.icao24)
+
+    def __lt__(self, other: object) -> bool:
         """Самолёт меньше другого, если летит ниже."""
+        if not isinstance(other, Aeroplane):
+            return NotImplemented
         return self.geo_altitude < other.geo_altitude
 
-    def __gt__(self, other: "Aeroplane") -> bool:
+    def __gt__(self, other: object) -> bool:
         """Самолёт больше другого, если летит выше."""
+        if not isinstance(other, Aeroplane):
+            return NotImplemented
         return self.geo_altitude > other.geo_altitude
 
     def faster_than(self, other: "Aeroplane") -> bool:
@@ -166,23 +174,47 @@ class Aeroplane:
         Создаёт объект Aeroplane из словаря (например, из JSON-файла).
 
         Особенность API OpenSky: вместо числа может прийти None,
-        поэтому для позывного подставляем заглушку вместо падения с ошибкой.
+        а позывной бывает пустой строкой или строкой из пробелов.
+        В таких случаях подставляем заглушку "unknown" / 0.0 вместо
+        падения с ошибкой, чтобы не терять запись целиком.
         """
         if not isinstance(data, dict):
             raise TypeError("Данные должны быть словарём")
 
-        callsign = data.get("callsign")
-        if callsign is None:
-            callsign = "unknown"
+        def get_number(key: str) -> float:
+            value = data.get(key)
+            return 0.0 if value is None else value
+
+        callsign = data.get("callsign") or "unknown"
+        origin_country = data.get("origin_country") or "unknown"
 
         return cls(
             icao24=data["icao24"],
             callsign=callsign,
-            origin_country=data["origin_country"],
-            velocity=data["velocity"],
-            geo_altitude=data["geo_altitude"],
+            origin_country=origin_country,
+            velocity=get_number("velocity"),
+            geo_altitude=get_number("geo_altitude"),
         )
 
+    @classmethod
+    def cast_to_object_list(cls, data: list[dict]) -> list["Aeroplane"]:
+        """
+        Создаёт список объектов Aeroplane из списка словарей.
+
+        Записи без icao24 или с некорректными типами полей пропускаются —
+        их невозможно корректно преобразовать в объект.
+        """
+        aeroplanes: list["Aeroplane"] = []
+        for item in data:
+            try:
+                aeroplanes.append(cls.from_dict(item))
+            except (TypeError, ValueError, KeyError):
+                continue
+        return aeroplanes
+
+    # ------------------------------------------------------------------
+    # Представление в виде строки
+    # ------------------------------------------------------------------
 
     def __str__(self) -> str:
         return (
