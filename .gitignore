@@ -1,0 +1,16 @@
+# PyCharm
+.idea/
+*.iml
+
+# Виртуальное окружение
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Тесты и покрытие
+.pytest_cache/
+.coverage
+htmlcov/
